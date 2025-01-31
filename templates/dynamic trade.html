@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Trading Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.3/socket.io.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Dynamic Trading Platform</h1>
+        <nav>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/trade">Trade</a>
+            <a href="/profile">Profile</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Login Page -->
+        <div id="login-page" class="page">
+            <h2>Login</h2>
+            <form id="login-form">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page hidden">
+            <h2>Welcome, <span id="user-name"></span></h2>
+            <div id="account-info">
+                <h3>Account Balance: <span id="balance"></span></h3>
+                <h3>Linked Trading Account: <span id="trading-account"></span></h3>
+            </div>
+            <div id="market-data">
+                <h3>Real-Time Market Data</h3>
+                <ul id="market-data-list"></ul>
+            </div>
+        </div>
+
+        <!-- Trade Page -->
+        <div id="trade-page" class="page hidden">
+            <h2>Execute a Trade</h2>
+            <form id="trade-form">
+                <label for="asset">Asset:</label>
+                <select id="asset" name="asset">
+                    <option value="stock">Stock</option>
+                    <option value="crypto">Crypto</option>
+                    <option value="forex">Forex</option>
+                </select>
+
+                <label for="trade-type">Trade Type:</label>
+                <select id="trade-type" name="trade-type">
+                    <option value="buy">Buy</option>
+                    <option value="sell">Sell</option>
+                </select>
+
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" min="1" required>
+
+                <button type="submit">Execute Trade</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const socket = io();
+
+        // Handle user login
+        document.getElementById('login-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await axios.post('/login', { username, password });
+                if (response.data.success) {
+                    document.getElementById('login-page').classList.add('hidden');
+                    document.getElementById('dashboard-page').classList.remove('hidden');
+                    document.getElementById('user-name').innerText = response.data.user.name;
+                    document.getElementById('balance').innerText = `$${response.data.user.balance}`;
+                    document.getElementById('trading-account').innerText = response.data.user.tradingAccount;
+                } else {
+                    alert('Login failed: ' + response.data.message);
+                }
+            } catch (error) {
+                alert('An error occurred during login.');
+            }
+        });
+
+        // Handle trade form submission
+        document.getElementById('trade-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const asset = document.getElementById('asset').value;
+            const tradeType = document.getElementById('trade-type').value;
+            const quantity = document.getElementById('quantity').value;
+
+            try {
+                const response = await axios.post('/trade', { asset, tradeType, quantity });
+                alert(response.data.message);
+            } catch (error) {
+                alert('An error occurred while executing the trade.');
+            }
+        });
+
+        // Handle real-time market data updates
+        socket.on('update_data', (data) => {
+            const marketDataList = document.getElementById('market-data-list');
+            marketDataList.innerHTML = '';
+            Object.entries(data).forEach(([asset, price]) => {
+                const li = document.createElement('li');
+                li.textContent = `${asset}: $${price}`;
+                marketDataList.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
