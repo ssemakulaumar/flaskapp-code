@@ -2,7 +2,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
-    private static final String BASE_URL = "http://your-flask-server.com/";
+    private static final String BASE_URL = "http://ssemakulaumar.pythonanywhere.com/";
     private static Retrofit retrofit;
 
     public static Retrofit getRetrofitInstance() {
